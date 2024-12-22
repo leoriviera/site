@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <title>{{title}}</title>
+    <style type="text/css">
+      @import
+      url('https://api.fonts.coollabs.io/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+      * { font-family: "Atkinson Hyperlegible", sans-serif; } body { margin:
+      40px auto; max-width: 650px; line-height: 1.6; font-size: 18px;
+      background-color: #F5F5F5; color: #444; padding: 0 10px; } h1, h2, h3 {
+      line-height: 1.2; } @media (prefers-color-scheme: dark) { body { color:
+      #e2e8f0; background-color: #141414; } a { color: #3b82f6} a:visited
+      {color: #a855f7} }
+    </style>
+    <script
+      defer
+      src="https://umami.cowsay.io/script.js"
+      data-website-id="64248185-bcc9-49a6-a2cd-a4e8d6ea1aa1"
+    ></script>
+  </head>
+  <body>
+    <h1>{{title}}</h1>
+
+    {{{html}}}
+
+    <hr />
+
+    <p>This page was rendered at
+      {{now}}.<br />
+      This page was last updated at
+      {{updatedAt}}.
+    </p>
+  </body>
+</html>

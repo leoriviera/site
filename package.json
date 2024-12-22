@@ -1,0 +1,17 @@
+{
+  "name": "site",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "keywords": [],
+  "author": "Leo Riviera <leo@cowsay.io>",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "handlebars": "^4.7.8",
+    "marked": "^15.0.4",
+    "tsx": "^4.19.2"
+  }
+}
