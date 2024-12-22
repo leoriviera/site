@@ -72,7 +72,6 @@ import { marked } from "marked";
           const { text, updatedAt } = await fetchPageContent(document);
 
           const html = await marked.parse(text);
-          console.log(text);
 
           response = {
             status: 200,
@@ -107,8 +106,6 @@ import { marked } from "marked";
             );
 
             const html = await marked.parse(text);
-
-            console.log(documents);
 
             response = {
               status: 404,
