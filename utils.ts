@@ -139,7 +139,11 @@ export const replaceWikiLinks = async (
     );
     const newUrl = new URL(document, process.env.WEBSITE_URL);
 
-    newContent = newContent.replaceAll(oldUrl.toString(), newUrl.toString());
+    newContent = newContent
+      // Replace absolute Outline URLs
+      .replaceAll(oldUrl.toString(), newUrl.toString())
+      // Replace relative Outline URLs
+      .replaceAll(documents[document].url, document);
   }
 
   return newContent;

@@ -26,10 +26,15 @@
 
     <hr />
 
-    <p>This page was rendered at
-      {{now}}.<br />
+    {{#if renderTime}}
+    <p>This page was rendered in
+      {{renderTime}}ms.<br />
+    {{/if}}
+
+    {{#if updatedAt}}
       This page was last updated at
       {{updatedAt}}.
+    {{/if}}
     </p>
   </body>
 </html>
