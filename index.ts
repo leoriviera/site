@@ -48,7 +48,7 @@ import { marked } from "marked";
       const url =
         req.url === undefined || req.url === "/"
           ? "/index"
-          : new URL(req.url, process.env.WEBSITE_URL).pathname;
+          : decodeURI(new URL(req.url, process.env.WEBSITE_URL).pathname);
 
       const { data: documents } = await getDocuments();
 
