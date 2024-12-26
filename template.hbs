@@ -1,40 +1,92 @@
 <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <title>{{title}}</title>
-    <style type="text/css">
-      @import
-      url('https://api.fonts.coollabs.io/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-      * { font-family: "Atkinson Hyperlegible", sans-serif; } body { margin:
-      40px auto; max-width: 650px; line-height: 1.6; font-size: 18px;
-      background-color: #F5F5F5; color: #444; padding: 0 10px; } h1, h2, h3 {
-      line-height: 1.2; } @media (prefers-color-scheme: dark) { body { color:
-      #e2e8f0; background-color: #141414; } a { color: #3b82f6} a:visited
-      {color: #a855f7} } h1.title { font-size: 2.5em; }
-    </style>
-    <script
-      defer
-      src="https://umami.cowsay.io/script.js"
-      data-website-id="64248185-bcc9-49a6-a2cd-a4e8d6ea1aa1"
-    ></script>
-  </head>
-  <body>
-    <h1 class="title">{{title}}</h1>
 
-    {{{html}}}
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <title>{{title}}</title>
+  <style type="text/css">
+    @import url('https://api.fonts.coollabs.io/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
-    <hr />
+    * {
+      font-family: "Atkinson Hyperlegible", sans-serif;
+    }
 
-    {{#if renderTime}}
-    <p>This page was rendered in
-      {{renderTime}}ms.<br />
+    body {
+      margin:
+        40px auto;
+      max-width: 650px;
+      line-height: 1.6;
+      font-size: 18px;
+      background-color: #F5F5F5;
+      color: #444;
+      padding: 0 10px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.2;
+    }
+
+    h1.title {
+      font-size: 2.5em;
+    }
+
+    code {
+      border-radius: 4px;
+      border: 1px solid rgb(232, 235, 237);
+      background: rgb(244, 247, 250);
+      padding: 3px 4px;
+      color: rgb(3, 47, 98);
+      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      font-size: 80%;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        color:
+          #e2e8f0;
+        background-color: #141414;
+      }
+
+      a {
+        color: #3b82f6;
+      }
+
+      a:visited {
+        color: #a855f7
+      }
+
+      code {
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgb(17, 19, 25);
+        padding: 3px 4px;
+        color: rgb(206, 145, 120);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace font-size: 80%;
+      }
+    }
+  </style>
+  <script defer src="https://umami.cowsay.io/script.js" data-website-id="64248185-bcc9-49a6-a2cd-a4e8d6ea1aa1"></script>
+</head>
+
+<body>
+  <h1 class="title">{{title}}</h1>
+
+  {{{html}}}
+
+  <hr />
+
+  {{#if renderTime}}
+  <p>This page was rendered in
+    {{renderTime}}ms.<br />
     {{/if}}
 
     {{#if updatedAt}}
-      This page was last updated at
-      {{updatedAt}}.
+    This page was last updated at
+    {{updatedAt}}.
     {{/if}}
-    </p>
-  </body>
+  </p>
+</body>
+
 </html>
