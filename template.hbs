@@ -2,8 +2,8 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <title>{{title}}</title>
+  {{{favicon}}}
   <style type="text/css">
     @import url('https://api.fonts.coollabs.io/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
@@ -28,8 +28,15 @@
       line-height: 1.2;
     }
 
-    h1.title {
+    div.title {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    div.title h1, span {
       font-size: 2.5em;
+      margin-top: 0;
       margin-bottom: 0;
     }
 
@@ -72,7 +79,13 @@
 </head>
 
 <body>
-  <h1 class="title">{{title}}</h1>
+  <div class="title">
+    <h1>{{title}}</h1>
+    {{#if emoji}}
+      <span>{{emoji}}</span>
+    {{/if}}
+  </div>
+
 
   {{{html}}}
 

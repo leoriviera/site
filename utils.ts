@@ -4,6 +4,7 @@ type OutlineDocument = {
   id: string;
   url: string;
   title: string;
+  icon: string;
   children: OutlineDocument[];
 };
 
@@ -12,6 +13,7 @@ type OutlineDocumentsByPath = Record<string, Omit<OutlineDocument, "children">>;
 type OutlineDocumentContent = {
   title: string;
   text: string;
+  icon: string;
   updatedAt: string;
 };
 
@@ -77,6 +79,7 @@ export const getDocuments = async () => {
       documents[`${prefix}${document.title}`] = {
         id: document.id,
         title: document.title,
+        icon: document.icon,
         url: document.url,
       };
 
@@ -147,4 +150,28 @@ export const replaceWikiLinks = async (
   }
 
   return newContent;
+};
+
+export const generateIcons = (icon: string) => {
+  // Outline uses icons, which come from the outline-icons package.
+  // (https://github.com/outline/outline-icons)
+  // These are represented by text strings.
+  // If it's not an emoji, we want to ignore it for now.
+  const isIconEmoji = /\p{Extended_Pictographic}/u.test(icon);
+
+  if (!isIconEmoji) {
+    // Fallback to no page emoji and default favicon
+    return {
+      emoji: undefined,
+      favicon: `<link rel="icon" type="image/x-icon" href="/favicon.ico" />`,
+    };
+  }
+
+  return {
+    emoji: icon,
+    favicon: `<link
+      rel='icon'
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${icon}</text></svg>"
+    />`,
+  };
 };
