@@ -157,7 +157,9 @@ export const generateIcons = (icon: string) => {
   // (https://github.com/outline/outline-icons)
   // These are represented by text strings.
   // If it's not an emoji, we want to ignore it for now.
-  const isIconEmoji = /\p{Extended_Pictographic}/u.test(icon);
+  const isIconEmoji = /\p{Regional_Indicator}|\p{Extended_Pictographic}/u.test(
+    icon
+  );
 
   if (!isIconEmoji) {
     // Fallback to no page emoji and default favicon
