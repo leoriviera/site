@@ -1,23 +1,26 @@
 import { readFile } from "fs/promises";
+import { sampleDocumentContent, sampleDocumentTree } from "./sampleData";
 
-type OutlineDocument = {
+export type OutlineDocument = {
   id: string;
   url: string;
   title: string;
-  icon: string;
+  icon?: string;
   children: OutlineDocument[];
 };
-
-type OutlineDocumentsByPath = Record<string, Omit<OutlineDocument, "children">>;
-
-type OutlineDocumentContent = {
+export type OutlineDocumentContent = {
   title: string;
   text: string;
-  icon: string;
+  icon?: string;
   updatedAt: string;
 };
+type OutlineDocumentsByPath = Record<string, Omit<OutlineDocument, "children">>;
 
-export const setEnv = async () => {
+const USE_SAMPLE_DATA = process.env.USE_SAMPLE_DATA === "true";
+
+export const setEnv = async (
+  defaultEnv: Record<string, string> = {}
+): Promise<void> => {
   try {
     const file = await readFile(".env", "utf-8");
 
@@ -35,13 +38,26 @@ export const setEnv = async () => {
       throw err;
     }
   }
+
+  // Set default values of environment variables
+  for (const [key, defaultValue] of Object.entries(defaultEnv)) {
+    if (process.env[key] === undefined) {
+      process.env[key] = defaultValue;
+    }
+  }
 };
 
-export const getCollectionDocumentTree = async () => {
+export const getCollectionDocumentTree = async (): Promise<
+  OutlineDocument[]
+> => {
   const url = new URL(
     "/api/collections.documents",
     process.env.OUTLINE_API_HOST
   );
+
+  if (USE_SAMPLE_DATA) {
+    return sampleDocumentTree;
+  }
 
   const response = await fetch(url.toString(), {
     method: "POST",
@@ -104,6 +120,10 @@ export const fetchPageContent = async (
   document: OutlineDocumentsByPath[string]
 ): Promise<OutlineDocumentContent> => {
   const url = new URL("/api/documents.info", process.env.OUTLINE_API_HOST);
+
+  if (USE_SAMPLE_DATA) {
+    return sampleDocumentContent[document.id];
+  }
 
   const response = await fetch(url.toString(), {
     method: "POST",

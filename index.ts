@@ -12,8 +12,12 @@ import {
 import { marked } from "marked";
 
 (async () => {
-  // Parse env file into process.env
-  await setEnv();
+  // Parse env file into process.env, while also defining default environment
+  // variables. I've done it like this so I can definitely document what variables
+  // I expect, and ensure they have *some* value at runtime.
+  await setEnv({
+    USE_SAMPLE_DATA: "false",
+  });
 
   const port = process.env.PORT || 3000;
   const requiredEnv = [
@@ -23,6 +27,7 @@ import { marked } from "marked";
     "WEBSITE_URL",
     "TEMPLATE_PATH",
   ];
+
   const missingEnv = requiredEnv.filter((key) => !process.env[key]);
   if (missingEnv.length > 0) {
     throw new Error(
