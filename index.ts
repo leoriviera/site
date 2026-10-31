@@ -68,7 +68,7 @@ import { marked } from "marked";
     });
   });
 
-  console.log(shortHash, changesExist);
+  const commit = `${shortHash}${changesExist ? "+" : ""}`;
 
   createServer(async (req, res) => {
     const start = new Date().getTime();
@@ -111,7 +111,7 @@ import { marked } from "marked";
             html: await replaceWikiLinks(documents, html),
             updatedAt,
             renderTime: new Date().getTime() - start,
-            shortHash: `${shortHash}${changesExist && "+"}`,
+            commit,
           },
           headers: {
             "Content-Type": "text/html; charset=utf-8",
@@ -131,7 +131,7 @@ import { marked } from "marked";
               favicon,
               html: "<p>Page not found.</p>",
               renderTime: new Date().getTime() - start,
-              shortHash: `${shortHash}${changesExist && "+"}`,
+              commit,
             },
             headers: {
               "Content-Type": "text/html; charset=utf-8",
@@ -151,7 +151,7 @@ import { marked } from "marked";
               html: await replaceWikiLinks(documents, html),
               updatedAt,
               renderTime: new Date().getTime() - start,
-              shortHash: `${shortHash}${changesExist && "+"}`,
+              commit,
             },
             headers: {
               "Content-Type": "text/html; charset=utf-8",
@@ -172,7 +172,7 @@ import { marked } from "marked";
           favicon,
           html: "<p>Something went wrong, and the server failed to render the page.</p><p>Womp womp.</p>",
           renderTime: new Date().getTime() - start,
-          shortHash: `${shortHash}${changesExist && "+"}`,
+          commit,
         },
         headers: {
           "Content-Type": "text/html; charset=utf-8",
