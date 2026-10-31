@@ -12,14 +12,26 @@
     }
 
     body {
-      margin:
-        40px auto;
-      max-width: 650px;
-      line-height: 1.6;
       font-size: 18px;
       background-color: #F5F5F5;
       color: #444;
+    }
+
+    div.banner {
+      {{!-- remove default body styles --}}
+      margin: -8px -8px -20px -8px;
+      text-align: center;
+      font-size: 16px;
+      {{!-- Tailwind yellow-300 --}}
+      background-color: oklch(85.2% 0.199 91.936);
+      padding: 5px;
+    }
+
+    div.content {
       padding: 0 10px;
+      margin: 40px auto;
+      max-width: 650px;
+      line-height: 1.6;
     }
 
     h1,
@@ -58,9 +70,13 @@
 
     @media (prefers-color-scheme: dark) {
       body {
-        color:
-          #e2e8f0;
+        color: #e2e8f0;
         background-color: #141414;
+      }
+
+      div.banner {
+        {{!-- Tailwind yellow-600 --}}
+        background-color: oklch(68.1% 0.162 75.834);
       }
 
       a {
@@ -86,31 +102,42 @@
 </head>
 
 <body>
-  <div class="title">
-    <h1>{{title}}</h1>
-    {{#if emoji}}
-      <span>{{emoji}}</span>
-    {{/if}}
-  </div>
+  {{#if displayFailoverBanner}}
+    <div class="banner">
+      <p>You&apos;re on a cached version of this website because my homelab server has gone down. It should be back soon!
+        <br />
+        In the meantime, some content might not be up-to-date and some links might not work.
+      </p>
+    </div>
+  {{/if}}
 
-
-  {{{html}}}
-
-  <hr />
-
-  {{#if renderTime}}
-    <p>This page was rendered in {{renderTime}}ms from
-      {{#if commit}}<code>{{commit}}</code>.
-      {{else}}
-      an unknown commit.
+  <div class="content">
+    <div class="title">
+      <h1>{{title}}</h1>
+      {{#if emoji}}
+        <span>{{emoji}}</span>
       {{/if}}
-    <br />
-  {{/if}}
+    </div>
 
-  {{#if updatedAt}}
-    This page was last updated at {{updatedAt}}.
-  {{/if}}
-  </p>
+
+    {{{html}}}
+
+    <hr />
+
+    {{#if renderTime}}
+      <p>This page was rendered in {{renderTime}}ms from
+        {{#if commit}}<code>{{commit}}</code>.
+        {{else}}
+        an unknown commit.
+        {{/if}}
+      <br />
+    {{/if}}
+
+    {{#if updatedAt}}
+      This page was last updated at {{updatedAt}}.
+    {{/if}}
+    </p>
+  </div>
 </body>
 
 </html>
