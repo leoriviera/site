@@ -17,3 +17,8 @@ export type OutlineDocumentsByPath = Record<
   string,
   Omit<OutlineDocument, "children">
 >;
+
+export type Icon = {
+  emoji?: string;
+  favicon: string;
+};

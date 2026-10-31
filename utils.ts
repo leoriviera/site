@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import { sampleDocumentContent, sampleDocumentTree } from "./sampleData";
 import {
+  Icon,
   OutlineDocument,
   OutlineDocumentContent,
   OutlineDocumentsByPath,
@@ -162,13 +163,13 @@ export const replaceWikiLinks = async (
   return newContent;
 };
 
-export const generateIcons = (icon: string) => {
+export const generateIcons = (icon?: string): Icon => {
   // Outline uses icons, which come from the outline-icons package.
   // (https://github.com/outline/outline-icons)
   // These are represented by text strings.
   // If it's not an emoji, we want to ignore it for now.
   const isIconEmoji = /\p{Regional_Indicator}|\p{Extended_Pictographic}/u.test(
-    icon,
+    icon ?? "",
   );
 
   if (!isIconEmoji) {
