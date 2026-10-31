@@ -53,7 +53,9 @@ import { marked } from "marked";
   });
 
   const changesExist: boolean = await new Promise((res, rej) => {
-    exec("git diff-index --quiet HEAD", (err) => {
+    exec("git diff-index HEAD", (err, out) => {
+      console.log(err, out);
+
       if (err == null) {
         res(false);
         return;
