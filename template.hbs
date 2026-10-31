@@ -99,14 +99,17 @@
   <hr />
 
   {{#if renderTime}}
-  <p>This page was rendered in
-    {{renderTime}}ms.<br />
-    {{/if}}
+    <p>This page was rendered in {{renderTime}}ms from
+      {{#if shortHash}}<code>{{shortHash}}</code>.
+      {{else}}
+      an unknown commit.
+      {{/if}}
+    <br />
+  {{/if}}
 
-    {{#if updatedAt}}
-    This page was last updated at
-    {{updatedAt}}.
-    {{/if}}
+  {{#if updatedAt}}
+    This page was last updated at {{updatedAt}}.
+  {{/if}}
   </p>
 </body>
 

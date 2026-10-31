@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import { compile } from "handlebars";
 import { createServer } from "http";
+import { exec } from "child_process";
 
 import {
   fetchPageContent,
@@ -31,13 +32,43 @@ import { marked } from "marked";
   const missingEnv = requiredEnv.filter((key) => !process.env[key]);
   if (missingEnv.length > 0) {
     throw new Error(
-      `Missing required environment variable(s): ${missingEnv.join(", ")}`
+      `Missing required environment variable(s): ${missingEnv.join(", ")}`,
     );
   }
 
   const template = compile(
-    (await readFile(process.env.TEMPLATE_PATH!, "utf-8")).toString()
+    (await readFile(process.env.TEMPLATE_PATH!, "utf-8")).toString(),
   );
+
+  // TODO - check whether I'm using USE_SAMPLE_DATA here
+
+  // Get current hash
+  const shortHash: string = await new Promise((res, rej) => {
+    exec("git rev-parse --short HEAD", (err, out) => {
+      if (err) {
+        rej(err);
+      }
+      res(out.trim());
+    });
+  });
+
+  const changesExist: boolean = await new Promise((res, rej) => {
+    exec("git diff-index --quiet HEAD", (err) => {
+      if (err == null) {
+        res(false);
+        return;
+      }
+
+      if (err?.code == 1) {
+        res(true);
+        return;
+      }
+
+      rej(err);
+    });
+  });
+
+  console.log(shortHash, changesExist);
 
   createServer(async (req, res) => {
     const start = new Date().getTime();
@@ -80,6 +111,7 @@ import { marked } from "marked";
             html: await replaceWikiLinks(documents, html),
             updatedAt,
             renderTime: new Date().getTime() - start,
+            shortHash: `${shortHash}${changesExist && "+"}`,
           },
           headers: {
             "Content-Type": "text/html; charset=utf-8",
@@ -99,6 +131,7 @@ import { marked } from "marked";
               favicon,
               html: "<p>Page not found.</p>",
               renderTime: new Date().getTime() - start,
+              shortHash: `${shortHash}${changesExist && "+"}`,
             },
             headers: {
               "Content-Type": "text/html; charset=utf-8",
@@ -118,6 +151,7 @@ import { marked } from "marked";
               html: await replaceWikiLinks(documents, html),
               updatedAt,
               renderTime: new Date().getTime() - start,
+              shortHash: `${shortHash}${changesExist && "+"}`,
             },
             headers: {
               "Content-Type": "text/html; charset=utf-8",
@@ -138,6 +172,7 @@ import { marked } from "marked";
           favicon,
           html: "<p>Something went wrong, and the server failed to render the page.</p><p>Womp womp.</p>",
           renderTime: new Date().getTime() - start,
+          shortHash: `${shortHash}${changesExist && "+"}`,
         },
         headers: {
           "Content-Type": "text/html; charset=utf-8",
