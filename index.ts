@@ -102,7 +102,7 @@ import { OutlineDocumentsByPath } from "./types";
           return {
             title: `leo${path}`,
             icon,
-            text,
+            text: replaceWikiLinks(documents, text),
             updatedAt,
           };
         }),
@@ -160,7 +160,7 @@ import { OutlineDocumentsByPath } from "./types";
         title: `leo${url}`,
         favicon,
         emoji,
-        html: await replaceWikiLinks(documents, html),
+        html: replaceWikiLinks(documents, html),
         updatedAt,
         renderTime: new Date().getTime() - startTime,
         commit,

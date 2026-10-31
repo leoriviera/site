@@ -140,10 +140,10 @@ export const fetchPageContent = async (
   return data;
 };
 
-export const replaceWikiLinks = async (
+export const replaceWikiLinks = (
   documents: OutlineDocumentsByPath,
   content: string,
-): Promise<string> => {
+): string => {
   let newContent = content;
 
   for (const document in documents) {
