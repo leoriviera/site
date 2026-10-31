@@ -1,4 +1,4 @@
-import { OutlineDocument, OutlineDocumentContent } from "./utils";
+import { OutlineDocument, OutlineDocumentContent } from "./types";
 
 export const sampleDocumentTree: OutlineDocument[] = [
   {
