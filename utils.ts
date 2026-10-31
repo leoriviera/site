@@ -1,25 +1,15 @@
 import { readFile } from "fs/promises";
 import { sampleDocumentContent, sampleDocumentTree } from "./sampleData";
-
-export type OutlineDocument = {
-  id: string;
-  url: string;
-  title: string;
-  icon?: string;
-  children: OutlineDocument[];
-};
-export type OutlineDocumentContent = {
-  title: string;
-  text: string;
-  icon?: string;
-  updatedAt: string;
-};
-type OutlineDocumentsByPath = Record<string, Omit<OutlineDocument, "children">>;
+import {
+  OutlineDocument,
+  OutlineDocumentContent,
+  OutlineDocumentsByPath,
+} from "./types";
 
 const USE_SAMPLE_DATA = process.env.USE_SAMPLE_DATA === "true";
 
 export const setEnv = async (
-  defaultEnv: Record<string, string> = {}
+  defaultEnv: Record<string, string> = {},
 ): Promise<void> => {
   try {
     const file = await readFile(".env", "utf-8");
@@ -33,7 +23,7 @@ export const setEnv = async (
         process.env[key] = value;
       }
     }
-  } catch (err) {
+  } catch (err: any) {
     if (err.code !== "ENOENT") {
       throw err;
     }
@@ -52,7 +42,7 @@ export const getCollectionDocumentTree = async (): Promise<
 > => {
   const url = new URL(
     "/api/collections.documents",
-    process.env.OUTLINE_API_HOST
+    process.env.OUTLINE_API_HOST,
   );
 
   if (USE_SAMPLE_DATA) {
@@ -72,7 +62,7 @@ export const getCollectionDocumentTree = async (): Promise<
 
   if (!response.ok) {
     throw new Error(
-      `HTTP error when fetching collection documents! status: ${response.status}`
+      `HTTP error when fetching collection documents! status: ${response.status}`,
     );
   }
 
@@ -89,7 +79,7 @@ export const getDocuments = async () => {
   const traverseDocumentTree = (
     tree: OutlineDocument[],
     prefix: string = "/",
-    documents: OutlineDocumentsByPath = {}
+    documents: OutlineDocumentsByPath = {},
   ): OutlineDocumentsByPath => {
     for (const document of tree) {
       documents[`${prefix}${document.title}`] = {
@@ -103,7 +93,7 @@ export const getDocuments = async () => {
         return traverseDocumentTree(
           document.children,
           `${prefix}${document.title}/`,
-          documents
+          documents,
         );
       }
     }
@@ -117,7 +107,7 @@ export const getDocuments = async () => {
 };
 
 export const fetchPageContent = async (
-  document: OutlineDocumentsByPath[string]
+  document: OutlineDocumentsByPath[string],
 ): Promise<OutlineDocumentContent> => {
   const url = new URL("/api/documents.info", process.env.OUTLINE_API_HOST);
 
@@ -138,7 +128,7 @@ export const fetchPageContent = async (
 
   if (!response.ok) {
     throw new Error(
-      `HTTP error when fetching document content! status: ${response.status}`
+      `HTTP error when fetching document content! status: ${response.status}`,
     );
   }
 
@@ -151,14 +141,14 @@ export const fetchPageContent = async (
 
 export const replaceWikiLinks = async (
   documents: OutlineDocumentsByPath,
-  content: string
+  content: string,
 ): Promise<string> => {
   let newContent = content;
 
   for (const document in documents) {
     const oldUrl = new URL(
       documents[document].url,
-      process.env.OUTLINE_API_HOST
+      process.env.OUTLINE_API_HOST,
     );
     const newUrl = new URL(document, process.env.WEBSITE_URL);
 
@@ -178,7 +168,7 @@ export const generateIcons = (icon: string) => {
   // These are represented by text strings.
   // If it's not an emoji, we want to ignore it for now.
   const isIconEmoji = /\p{Regional_Indicator}|\p{Extended_Pictographic}/u.test(
-    icon
+    icon,
   );
 
   if (!isIconEmoji) {
