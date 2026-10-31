@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "tsx index.ts"
+    "start": "tsx index.ts",
+    "dev": "nodemon index.ts"
   },
   "keywords": [],
   "author": "Leo Riviera <leo@cowsay.io>",
@@ -15,6 +16,7 @@
     "tsx": "^4.19.2"
   },
   "devDependencies": {
-    "@types/node": "^26.6.6"
+    "@types/node": "^26.6.6",
+    "nodemon": "^3.1.14"
   }
 }
