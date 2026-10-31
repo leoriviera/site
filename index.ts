@@ -11,6 +11,7 @@ import {
   setEnv,
 } from "./utils";
 import { marked } from "marked";
+import { OutlineDocumentsByPath } from "./types";
 
 (async () => {
   // Parse env file into process.env, while also defining default environment
@@ -72,16 +73,127 @@ import { marked } from "marked";
   //   });
   // });
 
+  type Response = {
+    status: number;
+    context: string | Record<string, unknown>;
+    headers: Record<string, string>;
+    options: {
+      useTemplate: boolean;
+    };
+  };
+
   const commit = `${shortHash}`;
 
-  createServer(async (req, res) => {
-    const start = new Date().getTime();
+  const generateResponse = async (
+    url: string,
+    documents: OutlineDocumentsByPath,
+    startTime: number,
+  ): Promise<Response> => {
+    if (!documents) {
+      throw new Error("No documents fetched from Outline. Throwing error.");
+    }
 
-    let response = {
-      status: 200,
-      context: {},
+    // Return content.json to allow for external failover
+    if (url == "/content.json") {
+      const results = await Promise.all(
+        Object.entries(documents).map(async ([path, document]) => {
+          const { text, updatedAt, icon } = await fetchPageContent(document);
+
+          return {
+            title: `leo${path}`,
+            icon,
+            text,
+            updatedAt,
+          };
+        }),
+      );
+
+      return {
+        status: 200,
+        context: JSON.stringify({
+          results,
+          commit,
+          renderTime: new Date().getTime() - startTime,
+        }),
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        options: {
+          useTemplate: false,
+        },
+      };
+    }
+
+    const document = documents[url];
+
+    // If we can't find the document OR the 404 document, use a hard-coded 404
+    if (document === undefined && !documents["/404"]) {
+      const { emoji, favicon } = generateIcons("🥸");
+      return {
+        status: 404,
+        context: {
+          title: "leo/404",
+          emoji,
+          favicon,
+          html: "<p>Page not found.</p>",
+          renderTime: new Date().getTime() - startTime,
+          commit,
+        },
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+        },
+        options: {
+          useTemplate: true,
+        },
+      };
+    }
+
+    const { text, updatedAt, icon } = await fetchPageContent(
+      document ?? documents["/404"],
+    );
+    const html = await marked.parse(text);
+    const { emoji, favicon } = generateIcons(icon);
+
+    return {
+      status: document ? 200 : 404,
+      context: {
+        title: `leo${url}`,
+        favicon,
+        emoji,
+        html: await replaceWikiLinks(documents, html),
+        updatedAt,
+        renderTime: new Date().getTime() - startTime,
+        commit,
+      },
       headers: {
         "Content-Type": "text/html; charset=utf-8",
+      },
+      options: {
+        useTemplate: true,
+      },
+    };
+  };
+
+  createServer(async (req, res) => {
+    const startTime = new Date().getTime();
+
+    // Default to a 500 page
+    const { emoji, favicon } = generateIcons("🔥");
+    let response: Response = {
+      status: 500,
+      context: {
+        title: "leo/500",
+        emoji,
+        favicon,
+        html: "<p>Something went wrong, and the server failed to render the page.</p><p>Womp womp.</p>",
+        renderTime: new Date().getTime() - startTime,
+        commit,
+      },
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+      },
+      options: {
+        useTemplate: true,
       },
     };
 
@@ -93,99 +205,17 @@ import { marked } from "marked";
 
       const { data: documents } = await getDocuments();
 
-      if (!documents) {
-        throw new Error("No documents fetched from Outline. Throwing error.");
-      }
-
-      const document = documents[url];
-
-      if (document !== undefined) {
-        const { text, updatedAt, icon } = await fetchPageContent(document);
-
-        const html = await marked.parse(text);
-
-        const { emoji, favicon } = generateIcons(icon);
-
-        response = {
-          status: 200,
-          context: {
-            title: `leo${url}`,
-            favicon,
-            emoji,
-            html: await replaceWikiLinks(documents, html),
-            updatedAt,
-            renderTime: new Date().getTime() - start,
-            commit,
-          },
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-          },
-        };
-      } else {
-        const notFoundDocument = documents["/404"];
-
-        const { emoji, favicon } = generateIcons("🥸");
-
-        if (!notFoundDocument) {
-          response = {
-            status: 404,
-            context: {
-              title: "leo/404",
-              emoji,
-              favicon,
-              html: "<p>Page not found.</p>",
-              renderTime: new Date().getTime() - start,
-              commit,
-            },
-            headers: {
-              "Content-Type": "text/html; charset=utf-8",
-            },
-          };
-        } else {
-          const { text, updatedAt } = await fetchPageContent(notFoundDocument);
-
-          const html = await marked.parse(text);
-
-          response = {
-            status: 404,
-            context: {
-              title: `leo${url}`,
-              emoji,
-              favicon,
-              html: await replaceWikiLinks(documents, html),
-              updatedAt,
-              renderTime: new Date().getTime() - start,
-              commit,
-            },
-            headers: {
-              "Content-Type": "text/html; charset=utf-8",
-            },
-          };
-        }
-      }
+      response = await generateResponse(url, documents, startTime);
     } catch (error) {
       console.log(error);
-
-      const { emoji, favicon } = generateIcons("🔥");
-
-      response = {
-        status: 500,
-        context: {
-          title: "leo/500",
-          emoji,
-          favicon,
-          html: "<p>Something went wrong, and the server failed to render the page.</p><p>Womp womp.</p>",
-          renderTime: new Date().getTime() - start,
-          commit,
-        },
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-        },
-      };
     } finally {
       return res
         .writeHead(response.status, response.headers)
-        .end(template(response.context));
+        .end(
+          response.options.useTemplate
+            ? template(response.context)
+            : response.context,
+        );
     }
   }).listen(port, () => {
     console.log(`Listening on port ${port}`);
