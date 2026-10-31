@@ -52,25 +52,27 @@ import { marked } from "marked";
     });
   });
 
-  const changesExist: boolean = await new Promise((res, rej) => {
-    exec("git diff-index HEAD", (err, out) => {
-      console.log(err, out);
+  // TODO - figure out why diff-index HEAD returns dirty in container, but not
+  // locally or in shell
+  // const changesExist: boolean = await new Promise((res, rej) => {
+  //   exec("git diff-index HEAD", (err, out) => {
+  //     console.log(err, out);
 
-      if (err == null) {
-        res(false);
-        return;
-      }
+  //     if (err == null) {
+  //       res(false);
+  //       return;
+  //     }
 
-      if (err?.code == 1) {
-        res(true);
-        return;
-      }
+  //     if (err?.code == 1) {
+  //       res(true);
+  //       return;
+  //     }
 
-      rej(err);
-    });
-  });
+  //     rej(err);
+  //   });
+  // });
 
-  const commit = `${shortHash}${changesExist ? "+" : ""}`;
+  const commit = `${shortHash}`;
 
   createServer(async (req, res) => {
     const start = new Date().getTime();
