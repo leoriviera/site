@@ -94,6 +94,7 @@ import { OutlineDocumentsByPath } from "./types";
     }
 
     // Return content.json to allow for external failover
+    // TODO - move this to a worker on a timer (every 30s?)
     if (url == "/content.json") {
       const results = await Promise.all(
         Object.entries(documents).map(async ([path, document]) => {
