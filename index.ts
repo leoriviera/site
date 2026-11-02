@@ -103,9 +103,14 @@ import { OutlineDocumentsByPath } from "./types";
             path,
             title: `leo${path}`,
             icon,
-            text: replaceWikiLinks(documents, text),
+            html: template(replaceWikiLinks(documents, text)),
             updatedAt,
           };
+
+          // Handlebars.json uses eval, which means Cloudflare Workers doesn't
+          // rendering the template.
+          // https://community.cloudflare.com/t/code-generation-from-strings-disallowed-for-this-context/15215
+          // We render here, and send the HTML over the wire.
         }),
       );
 
@@ -210,14 +215,12 @@ import { OutlineDocumentsByPath } from "./types";
     } catch (error) {
       console.log(error);
     } finally {
-      return res
-        .writeHead(response.status, response.headers)
-        .end(
-          response.options.useTemplate
-            // TODO - template render time is, unironically, not included in renderTime. fix this, idiot.
-            ? template(response.context)
-            : response.context,
-        );
+      return res.writeHead(response.status, response.headers).end(
+        response.options.useTemplate
+          ? // TODO - template render time is, unironically, not included in renderTime. fix this, idiot.
+            template(response.context)
+          : response.context,
+      );
     }
   }).listen(port, () => {
     console.log(`Listening on port ${port}`);
