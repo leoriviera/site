@@ -104,6 +104,7 @@ import { OutlineDocumentsByPath } from "./types";
             icon,
             text: replaceWikiLinks(documents, text),
             updatedAt,
+            path,
           };
         }),
       );
