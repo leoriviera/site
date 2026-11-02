@@ -172,19 +172,12 @@ export const generateIcons = (icon?: string): Icon => {
     icon ?? "",
   );
 
-  if (!isIconEmoji) {
-    // Fallback to no page emoji and default favicon
-    return {
-      emoji: undefined,
-      favicon: `<link rel="icon" type="image/x-icon" href="/favicon.ico" />`,
-    };
-  }
-
+  // If no icon emoji, fall back to no page emoji and orange favicon
   return {
-    emoji: icon,
+    emoji: isIconEmoji ? icon : undefined,
     favicon: `<link
       rel='icon'
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${icon}</text></svg>"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${isIconEmoji ? icon : "🧡"}</text></svg>"
     />`,
   };
 };
