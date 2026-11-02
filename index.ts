@@ -100,11 +100,11 @@ import { OutlineDocumentsByPath } from "./types";
           const { text, updatedAt, icon } = await fetchPageContent(document);
 
           return {
+            path,
             title: `leo${path}`,
             icon,
             text: replaceWikiLinks(documents, text),
             updatedAt,
-            path,
           };
         }),
       );
