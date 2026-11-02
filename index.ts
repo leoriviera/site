@@ -214,6 +214,7 @@ import { OutlineDocumentsByPath } from "./types";
         .writeHead(response.status, response.headers)
         .end(
           response.options.useTemplate
+            // TODO - template render time is, unironically, not included in renderTime. fix this, idiot.
             ? template(response.context)
             : response.context,
         );
