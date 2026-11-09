@@ -1,47 +1,76 @@
-import { readFile } from "fs/promises";
-import { compile } from "handlebars";
-import { createServer } from "http";
-import { exec } from "child_process";
+import { exec } from "node:child_process";
+import { createServer } from "node:http";
+import { resolve } from "node:path";
+import { Worker } from "node:worker_threads";
 
-import {
-  fetchPageContent,
-  generateIcons,
-  getDocuments,
-  replaceWikiLinks,
-  setEnv,
-} from "./utils";
-import { marked } from "marked";
-import { OutlineDocumentsByPath } from "./types";
+import { generateResponse, loadTemplate } from "./common";
+import { OutlineDocumentContent, Response } from "./types";
+import { fetchPageContent, generateIcons, getDocuments, setEnv } from "./utils";
+import { getSampleData, fetchSamplePageContent } from "./sample";
 
 (async () => {
   // Parse env file into process.env, while also defining default environment
   // variables. I've done it like this so I can definitely document what variables
   // I expect, and ensure they have *some* value at runtime.
   await setEnv({
+    DISPLAY_FAILOVER_BANNER: "false",
     USE_SAMPLE_DATA: "false",
   });
 
-  const port = process.env.PORT || 3000;
-  const requiredEnv = [
-    "OUTLINE_API_KEY",
-    "OUTLINE_COLLECTION_ID",
-    "OUTLINE_API_HOST",
-    "WEBSITE_URL",
-    "TEMPLATE_PATH",
-  ];
+  const failoverWorker = new Worker(resolve(__dirname, "./failover.ts"), {
+    execArgv: ["-r", "tsx/cjs"],
+  });
 
-  const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+  const port = process.env.PORT || 3000;
+  const requiredEnv: { key: string; isSensitive: boolean }[] = [
+    {
+      key: "OUTLINE_API_KEY",
+      isSensitive: true,
+    },
+    {
+      key: "OUTLINE_COLLECTION_ID",
+      isSensitive: true,
+    },
+    {
+      key: "OUTLINE_API_HOST",
+      isSensitive: false,
+    },
+    {
+      key: "WEBSITE_URL",
+      isSensitive: false,
+    },
+    {
+      key: "TEMPLATE_PATH",
+      isSensitive: false,
+    },
+    {
+      key: "USE_SAMPLE_DATA",
+      isSensitive: false,
+    },
+    {
+      key: "DISPLAY_FAILOVER_BANNER",
+      isSensitive: false,
+    },
+  ];
+  const missingEnv = requiredEnv.filter(({ key }) => !process.env[key]);
   if (missingEnv.length > 0) {
     throw new Error(
       `Missing required environment variable(s): ${missingEnv.join(", ")}`,
     );
   }
 
-  const template = compile(
-    (await readFile(process.env.TEMPLATE_PATH!, "utf-8")).toString(),
+  const env = Object.fromEntries(
+    requiredEnv.map(({ key, isSensitive }) => [
+      key,
+      isSensitive ? "*****" : process.env[key],
+    ]),
   );
 
-  // TODO - check whether I'm using USE_SAMPLE_DATA here
+  console.info("Current environment", env);
+
+  const template = loadTemplate(process.env.TEMPLATE_PATH!);
+  const displayFailoverBanner = process.env.DISPLAY_FAILOVER_BANNER! === "true";
+  const useSampleData = process.env.USE_SAMPLE_DATA! === "true";
 
   // Get current hash
   const shortHash: string = await new Promise((res, rej) => {
@@ -53,137 +82,16 @@ import { OutlineDocumentsByPath } from "./types";
     });
   });
 
-  // TODO - figure out why diff-index HEAD returns dirty in container, but not
-  // locally or in shell
-  // const changesExist: boolean = await new Promise((res, rej) => {
-  //   exec("git diff-index HEAD", (err, out) => {
-  //     console.log(err, out);
-
-  //     if (err == null) {
-  //       res(false);
-  //       return;
-  //     }
-
-  //     if (err?.code == 1) {
-  //       res(true);
-  //       return;
-  //     }
-
-  //     rej(err);
-  //   });
-  // });
-
-  type Response = {
-    status: number;
-    context: string | Record<string, unknown>;
-    headers: Record<string, string>;
-    options: {
-      useTemplate: boolean;
-    };
-  };
-
   const commit = `${shortHash}`;
-
-  const generateResponse = async (
-    url: string,
-    documents: OutlineDocumentsByPath,
-    startTime: number,
-  ): Promise<Response> => {
-    if (!documents) {
-      throw new Error("No documents fetched from Outline. Throwing error.");
-    }
-
-    // Return content.json to allow for external failover
-    // TODO - move this to a worker on a timer (every 30s?)
-    if (url == "/content.json") {
-      const results = await Promise.all(
-        Object.entries(documents).map(async ([path, document]) => {
-          const { text, updatedAt, icon } = await fetchPageContent(document);
-
-          return {
-            path,
-            title: `leo${path}`,
-            icon,
-            html: template(replaceWikiLinks(documents, text)),
-            updatedAt,
-          };
-
-          // Handlebars.json uses eval, which means Cloudflare Workers doesn't
-          // rendering the template.
-          // https://community.cloudflare.com/t/code-generation-from-strings-disallowed-for-this-context/15215
-          // We render here, and send the HTML over the wire.
-        }),
-      );
-
-      return {
-        status: 200,
-        context: JSON.stringify({
-          results,
-          commit,
-          renderTime: new Date().getTime() - startTime,
-        }),
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-        },
-        options: {
-          useTemplate: false,
-        },
-      };
-    }
-
-    const document = documents[url];
-
-    // If we can't find the document OR the 404 document, use a hard-coded 404
-    if (document === undefined && !documents["/404"]) {
-      const { emoji, favicon } = generateIcons("🥸");
-      return {
-        status: 404,
-        context: {
-          title: "leo/404",
-          emoji,
-          favicon,
-          html: "<p>Page not found.</p>",
-          renderTime: new Date().getTime() - startTime,
-          commit,
-        },
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-        },
-        options: {
-          useTemplate: true,
-        },
-      };
-    }
-
-    const { text, updatedAt, icon } = await fetchPageContent(
-      document ?? documents["/404"],
-    );
-    const html = await marked.parse(text);
-    const { emoji, favicon } = generateIcons(icon);
-
-    return {
-      status: document ? 200 : 404,
-      context: {
-        title: `leo${url}`,
-        favicon,
-        emoji,
-        html: replaceWikiLinks(documents, html),
-        updatedAt,
-        renderTime: new Date().getTime() - startTime,
-        commit,
-      },
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-      },
-      options: {
-        useTemplate: true,
-      },
-    };
-  };
+  failoverWorker.postMessage({
+    type: "SET_DATA",
+    data: {
+      commit,
+    },
+  });
 
   createServer(async (req, res) => {
     const startTime = new Date().getTime();
-
     // Default to a 500 page
     const { emoji, favicon } = generateIcons("🔥");
     let response: Response = {
@@ -195,6 +103,8 @@ import { OutlineDocumentsByPath } from "./types";
         html: "<p>Something went wrong, and the server failed to render the page.</p><p>Womp womp.</p>",
         renderTime: new Date().getTime() - startTime,
         commit,
+        displayFailoverBanner,
+        useSampleData,
       },
       headers: {
         "Content-Type": "text/html; charset=utf-8",
@@ -210,20 +120,40 @@ import { OutlineDocumentsByPath } from "./types";
           ? "/index"
           : decodeURI(new URL(req.url, process.env.WEBSITE_URL).pathname);
 
-      const { data: documents } = await getDocuments();
+      if (url !== "/500") {
+        const { data: documents } = useSampleData
+          ? await getSampleData()
+          : await getDocuments();
+        const document = documents[url] ?? documents["/404"];
 
-      response = await generateResponse(url, documents, startTime);
+        const pageContent: OutlineDocumentContent | undefined = document
+          ? useSampleData
+            ? await fetchSamplePageContent(document)
+            : await fetchPageContent(document)
+          : undefined;
+
+        response = await generateResponse(
+          url,
+          pageContent,
+          documents,
+          startTime,
+          commit,
+          displayFailoverBanner,
+          useSampleData,
+        );
+      }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       return res.writeHead(response.status, response.headers).end(
         response.options.useTemplate
-          ? // TODO - template render time is, unironically, not included in renderTime. fix this, idiot.
+          ? // TODO - template render time is, unironically, not included in
+            // renderTime. Fix this, idiot.
             template(response.context)
           : response.context,
       );
     }
   }).listen(port, () => {
-    console.log(`Listening on port ${port}`);
+    console.log(`Listening at http://localhost:${port}`);
   });
 })();

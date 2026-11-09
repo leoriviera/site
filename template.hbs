@@ -125,7 +125,7 @@
     <hr />
 
     {{#if renderTime}}
-      <p>This page was rendered in {{renderTime}}ms from
+      <p>This page was rendered{{#if useSampleData}} using sample data{{/if}} in {{renderTime}}ms from
         {{#if commit}}<code>{{commit}}</code>.
         {{else}}
         an unknown commit.

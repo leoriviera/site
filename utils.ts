@@ -18,6 +18,10 @@ export const setEnv = async (
     for (const line of file.split("\n")) {
       const [key, value] = line.split("=");
 
+      if (!key) {
+        continue;
+      }
+
       // We don't want to override any already set environment variables,
       // such as from the command line or the system environment.
       if (process.env[key] === undefined) {
@@ -112,10 +116,6 @@ export const fetchPageContent = async (
 ): Promise<OutlineDocumentContent> => {
   const url = new URL("/api/documents.info", process.env.OUTLINE_API_HOST);
 
-  if (USE_SAMPLE_DATA) {
-    return sampleDocumentContent[document.id];
-  }
-
   const response = await fetch(url.toString(), {
     method: "POST",
     headers: {
@@ -134,9 +134,7 @@ export const fetchPageContent = async (
   }
 
   const json = await response.json();
-
   const { data } = json as { data: OutlineDocumentContent };
-
   return data;
 };
 
@@ -147,34 +145,35 @@ export const replaceWikiLinks = (
   let newContent = content;
 
   for (const document in documents) {
-    const oldUrl = new URL(
-      documents[document].url,
-      process.env.OUTLINE_API_HOST,
-    );
-    const newUrl = new URL(document, process.env.WEBSITE_URL);
+    const url = documents[document]?.url;
+    if (url === undefined) {
+      continue;
+    }
 
+    const oldUrl = new URL(url, process.env.OUTLINE_API_HOST);
+    const newUrl = new URL(document, process.env.WEBSITE_URL);
     newContent = newContent
       // Replace absolute Outline URLs
       .replaceAll(oldUrl.toString(), newUrl.toString())
       // Replace relative Outline URLs
-      .replaceAll(documents[document].url, document);
+      .replaceAll(url, document);
   }
 
   return newContent;
 };
 
-export const generateIcons = (icon?: string): Icon => {
+export const generateIcons = (icon: string | null): Icon => {
   // Outline uses icons, which come from the outline-icons package.
   // (https://github.com/outline/outline-icons)
   // These are represented by text strings.
   // If it's not an emoji, we want to ignore it for now.
-  const isIconEmoji = /\p{Regional_Indicator}|\p{Extended_Pictographic}/u.test(
-    icon ?? "",
-  );
+  const isIconEmoji =
+    icon !== null &&
+    /\p{Regional_Indicator}|\p{Extended_Pictographic}/u.test(icon);
 
   // If no icon emoji, fall back to no page emoji and orange favicon
   return {
-    emoji: isIconEmoji ? icon : undefined,
+    emoji: isIconEmoji ? icon : "🧡",
     favicon: `<link
       rel='icon'
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${isIconEmoji ? icon : "🧡"}</text></svg>"

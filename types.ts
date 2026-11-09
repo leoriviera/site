@@ -9,7 +9,7 @@ export type OutlineDocument = {
 export type OutlineDocumentContent = {
   title: string;
   text: string;
-  icon?: string;
+  icon: string | null;
   updatedAt: string;
 };
 
@@ -21,4 +21,25 @@ export type OutlineDocumentsByPath = Record<
 export type Icon = {
   emoji?: string;
   favicon: string;
+};
+
+export type TemplateContext = {
+  title: string;
+  favicon: string;
+  displayFailoverBanner: boolean;
+  emoji?: string;
+  html: string;
+  renderTime?: number;
+  commit?: string;
+  updatedAt?: string;
+  useSampleData: boolean;
+};
+
+export type Response = {
+  status: number;
+  context: TemplateContext;
+  headers: Record<string, string>;
+  options: {
+    useTemplate: boolean;
+  };
 };
