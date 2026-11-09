@@ -7,8 +7,6 @@ import {
   OutlineDocumentsByPath,
 } from "./types";
 
-const USE_SAMPLE_DATA = process.env.USE_SAMPLE_DATA === "true";
-
 export const setEnv = async (
   defaultEnv: Record<string, string> = {},
 ): Promise<void> => {
@@ -49,10 +47,6 @@ export const getCollectionDocumentTree = async (): Promise<
     "/api/collections.documents",
     process.env.OUTLINE_API_HOST,
   );
-
-  if (USE_SAMPLE_DATA) {
-    return sampleDocumentTree;
-  }
 
   const response = await fetch(url.toString(), {
     method: "POST",
