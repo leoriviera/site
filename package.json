@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "NODE_ENV=prod tsx index.ts",
+    "start": "NODE_ENV=production tsx index.ts",
     "dev": "nodemon index.ts"
   },
   "keywords": [],
