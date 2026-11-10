@@ -1,5 +1,4 @@
 import { readFile } from "fs/promises";
-import { sampleDocumentContent, sampleDocumentTree } from "./sampleData";
 import {
   Icon,
   OutlineDocument,
@@ -66,7 +65,6 @@ export const getCollectionDocumentTree = async (): Promise<
   }
 
   const json = await response.json();
-
   const { data } = json as { data: OutlineDocument[] };
 
   return data;

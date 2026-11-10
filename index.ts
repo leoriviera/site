@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { Worker } from "node:worker_threads";
 
 import { generateResponse, loadTemplate } from "./common";
-import { OutlineDocumentContent, Response } from "./types";
+import { OutlineDocumentContent, Response, WorkerData } from "./types";
 import { fetchPageContent, generateIcons, getDocuments, setEnv } from "./utils";
 import { getSampleData, fetchSamplePageContent } from "./sample";
 
@@ -13,16 +13,26 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
   // variables. I've done it like this so I can definitely document what variables
   // I expect, and ensure they have *some* value at runtime.
   await setEnv({
+    ENV: "production",
     DISPLAY_FAILOVER_BANNER: "false",
     USE_SAMPLE_DATA: "false",
   });
 
-  const failoverWorker = new Worker(resolve(__dirname, "./failover.ts"), {
-    execArgv: ["-r", "tsx/cjs"],
-  });
-
   const port = process.env.PORT || 3000;
+  const rootDir = resolve(__dirname);
   const requiredEnv: { key: string; isSensitive: boolean }[] = [
+    {
+      key: "NODE_ENV",
+      isSensitive: false,
+    },
+    {
+      key: "SURGE_SH_TOKEN",
+      isSensitive: true,
+    },
+    {
+      key: "SURGE_SH_DOMAIN",
+      isSensitive: false,
+    },
     {
       key: "OUTLINE_API_KEY",
       isSensitive: true,
@@ -55,18 +65,21 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
   const missingEnv = requiredEnv.filter(({ key }) => !process.env[key]);
   if (missingEnv.length > 0) {
     throw new Error(
-      `Missing required environment variable(s): ${missingEnv.join(", ")}`,
+      `Missing required environment variable(s): ${missingEnv.map(({ key }) => key).join(", ")}`,
     );
   }
 
   const env = Object.fromEntries(
     requiredEnv.map(({ key, isSensitive }) => [
       key,
-      isSensitive ? "*****" : process.env[key],
+      // We check whether the process.env[key] is defined above,
+      // but the length check is here as a just-in-case.
+      isSensitive && (process.env[key] ?? "").length > 0
+        ? "*****"
+        : process.env[key],
     ]),
   );
-
-  console.info("Current environment", env);
+  console.info("Starting server with environment...", env);
 
   const template = loadTemplate(process.env.TEMPLATE_PATH!);
   const displayFailoverBanner = process.env.DISPLAY_FAILOVER_BANNER! === "true";
@@ -81,13 +94,15 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
       res(out.trim());
     });
   });
-
   const commit = `${shortHash}`;
-  failoverWorker.postMessage({
-    type: "SET_DATA",
-    data: {
+
+  // Create new failover worker
+  const _failoverWorker = new Worker(resolve(__dirname, "./failover.ts"), {
+    execArgv: ["-r", "tsx/cjs"],
+    workerData: {
       commit,
-    },
+      rootDir,
+    } as WorkerData,
   });
 
   createServer(async (req, res) => {

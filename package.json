@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "tsx index.ts",
+    "start": "NODE_ENV=prod tsx index.ts",
     "dev": "nodemon index.ts"
   },
   "keywords": [],
@@ -13,6 +13,7 @@
   "dependencies": {
     "handlebars": "^4.7.8",
     "marked": "^15.0.4",
+    "tar": "^7.5.22",
     "tsx": "^4.19.2"
   },
   "devDependencies": {

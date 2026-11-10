@@ -130,3 +130,6 @@ dist
 .pnp.*
 
 .env
+
+# Local failover output
+/output

@@ -43,3 +43,8 @@ export type Response = {
     useTemplate: boolean;
   };
 };
+
+export type WorkerData = {
+  commit: string;
+  rootDir: string;
+};
