@@ -1,9 +1,8 @@
 import { writeFile, rm, mkdir } from "node:fs/promises";
-import fs from "node:fs";
 import { tmpdir } from "node:os";
-import { resolve, dirname } from "node:path";
+import { resolve, dirname, basename } from "node:path";
 import { workerData } from "node:worker_threads";
-import { create } from "tar";
+import { spawn } from "node:child_process";
 
 import { generateResponse, loadTemplate } from "./common";
 import { OutlineDocumentContent, WorkerData } from "./types";
@@ -11,6 +10,7 @@ import { fetchPageContent, getDocuments } from "./utils";
 import { getSampleData, fetchSamplePageContent } from "./sample";
 
 let backingUp = false;
+let retryAt = new Date();
 
 if (workerData === undefined) {
   throw new Error(
@@ -102,14 +102,64 @@ const createFailoverBackup = async () => {
       }),
     );
 
+    const stream = spawn("tar", ["czf", "-", "-C", tempDirPath, "."], {
+      stdio: ["ignore", "pipe", "inherit"],
+    });
+
+    const response = await fetch(
+      `https://surge.surge.sh/${process.env.SURGE_SH_DOMAIN!}`,
+      {
+        method: "PUT",
+        // This... works. Let's just ship it.
+        // @ts-ignore
+        body: stream.stdout,
+        headers: {
+          Accept: "application/x-ndjson",
+          Authorization: `Basic ${surgeBasicAuth}`,
+          "Content-Type": "application/gzip",
+          message: `Failover generated at ${new Date(startTime).toISOString()}`,
+        },
+        // Apparently the duplex option is required when sending a body.
+        // I don't make the rules.
+        // https://github.com/nodejs/node/issues/46221#issue-1533888345
+        // @ts-ignore
+        duplex: "half",
+      },
+    );
+
+    if (response.status === 429) {
+      const date = new Date(response.headers.get("date") as string);
+      const retryAfter = Number(response.headers.get("retry-after") as string);
+      date.setSeconds(date.getSeconds() + retryAfter);
+      retryAt = date;
+      console.error(
+        `Uploads have been rate-limited. Retrying after ${retryAt.toISOString()}`,
+      );
+      return;
+    }
+
+    const text = await response.text();
+
+    if (!response.ok) {
+      throw new Error(text);
+    }
+
+    const splitResponse = text.trim().split("\n");
+    const responseLastLine = splitResponse[splitResponse.length - 1];
+    if (responseLastLine === "Failed to stream") {
+      throw new Error("Failed to stream body to surge.sh");
+    }
+
+    if (responseLastLine?.includes('"type":"info"')) {
+      console.info(
+        "Successfully deployed to surge.sh!",
+        JSON.parse(responseLastLine),
+      );
+    }
+
     if (isProd) {
       console.info("In production. Uploading failover site to surge.sh");
     }
-
-    // TODO - handle surge.sh rate limits
-    // According to https://surge.sh/docs/api/deploys,
-    // the retry-after header gives the seconds until the window allows
-    // another deploy. However, I'm not sure what format that'll come in.
   } catch (error) {
     console.error("error encountered while creating failover backup", {
       error,
@@ -117,46 +167,16 @@ const createFailoverBackup = async () => {
   }
 };
 
-(async () => {
-  // Create gzipped tar archive
-  // You definitely want to await on this, otherwise we'll start uploading
-  // before the gzip is ready. This is, quite obviously, bad.
-  const _stream = await create(
-    {
-      gzip: true,
-      C: tempDirPath,
-      prefix: "site",
-    },
-    ["."],
-  );
-
-  const stream = new ReadableStream();
-
-  const response = await fetch(
-    `https://surge.surge.sh/${process.env.SURGE_SH_DOMAIN!}`,
-    {
-      method: "PUT",
-      body: _stream,
-      headers: {
-        Accept: "application/x-ndjson",
-        // Authorization: `Basic ${surgeBasicAuth}`,
-        "Content-Type": "application/gzip",
-      },
-      // Apparently the duplex option is required when sending a body.
-      // I don't make the rules.
-      // https://github.com/nodejs/node/issues/46221#issue-1533888345
-      // @ts-ignore
-      duplex: "half",
-    },
-  );
-  console.log(response, await response.text());
-
-  return;
-})();
-
 setInterval(async () => {
   if (backingUp === true) {
     console.info("Currently already backing up!");
+    return;
+  }
+
+  if (retryAt > new Date()) {
+    console.info(
+      `Currently rate-limited. Waiting until ${retryAt.toISOString()}.`,
+    );
     return;
   }
 
