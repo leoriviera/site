@@ -26,13 +26,15 @@ export type Icon = {
 export type TemplateContext = {
   title: string;
   favicon: string;
-  displayFailoverBanner: boolean;
   emoji?: string;
   html: string;
   renderTime?: number;
   commit?: string;
   updatedAt?: string;
   useSampleData: boolean;
+  failover?: {
+    generatedAt: string;
+  };
 };
 
 export type Response = {

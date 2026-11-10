@@ -18,10 +18,13 @@ export const generateResponse = async (
   pageContent: OutlineDocumentContent | undefined,
   documents: OutlineDocumentsByPath,
   startTime: number,
-  commit: string,
-  displayFailoverBanner: boolean,
-  useSampleData: boolean,
+  contextOverride: Pick<
+    TemplateContext,
+    "commit" | "failover" | "useSampleData"
+  >,
 ): Promise<Response> => {
+  const { commit, failover, useSampleData } = contextOverride;
+
   if (pageContent === undefined) {
     const { emoji, favicon } = generateIcons("🥸");
     return {
@@ -33,7 +36,7 @@ export const generateResponse = async (
         html: "<p>Page not found.</p>",
         renderTime: new Date().getTime() - startTime,
         commit,
-        displayFailoverBanner,
+        failover,
         useSampleData,
       },
       headers: {
@@ -59,7 +62,7 @@ export const generateResponse = async (
       updatedAt,
       renderTime: new Date().getTime() - startTime,
       commit,
-      displayFailoverBanner,
+      failover,
       useSampleData,
     },
     headers: {

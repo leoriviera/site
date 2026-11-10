@@ -118,7 +118,6 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
         html: "<p>Something went wrong, and the server failed to render the page.</p><p>Womp womp.</p>",
         renderTime: new Date().getTime() - startTime,
         commit,
-        displayFailoverBanner,
         useSampleData,
       },
       headers: {
@@ -136,7 +135,7 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
           : decodeURI(new URL(req.url, process.env.WEBSITE_URL).pathname);
 
       if (url !== "/500") {
-        const { data: documents } = useSampleData
+        const { data: documents, lastFetched } = useSampleData
           ? await getSampleData()
           : await getDocuments();
         const document = documents[url] ?? documents["/404"];
@@ -147,14 +146,18 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
             : await fetchPageContent(document)
           : undefined;
 
+        const failover = displayFailoverBanner
+          ? {
+              generatedAt: lastFetched.toUTCString(),
+            }
+          : undefined;
+
         response = await generateResponse(
           url,
           pageContent,
           documents,
           startTime,
-          commit,
-          displayFailoverBanner,
-          useSampleData,
+          { commit, failover, useSampleData },
         );
       }
     } catch (error) {

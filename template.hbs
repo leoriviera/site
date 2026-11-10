@@ -24,7 +24,7 @@
       font-size: 16px;
       {{!-- Tailwind yellow-300 --}}
       background-color: oklch(85.2% 0.199 91.936);
-      padding: 5px;
+      padding: 5px 10vw;
     }
 
     div.content {
@@ -102,11 +102,11 @@
 </head>
 
 <body>
-  {{#if displayFailoverBanner}}
+  {{#if failover}}
     <div class="banner">
       <p>You&apos;re on a cached version of this website, as my homelab server has gone down. It should be back soon!
         <br />
-        In the meantime, some content might not be up-to-date and some links might not work.
+        This copy of the website was generated on {{failover/generatedAt}}, so some content might not be up-to-date and some links might not work.
       </p>
     </div>
   {{/if}}
