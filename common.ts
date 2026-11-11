@@ -30,7 +30,9 @@ export const generateResponse = async (
     return {
       status: 404,
       context: {
+        siteName,
         title: "leo/404",
+        description: "Page not found.",
         emoji,
         favicon,
         html: "<p>Page not found.</p>",
@@ -38,7 +40,6 @@ export const generateResponse = async (
         commit,
         failover,
         useSampleData,
-        siteName,
       },
       headers: {
         "Content-Type": "text/html; charset=utf-8",
@@ -53,10 +54,18 @@ export const generateResponse = async (
   const html = await marked.parse(text);
   const { emoji, favicon } = generateIcons(icon);
 
+  // We extract the first <p> tag from the HTML to use as the description for
+  // the page. We really shouldn't add links to the first <p> in pages, because
+  // they'll show up here. I've gone against using a parser mostly for speed,
+  // but I probably need to run some benchmarks (hah! as if.)
+  const description = /<p>(.*?)<\/p>/.exec(html)?.[1] ?? "";
+
   return {
     status: 200,
     context: {
+      siteName,
       title: `leo${url}`,
+      description,
       favicon,
       emoji,
       html: replaceWikiLinks(documents, html),
@@ -65,7 +74,6 @@ export const generateResponse = async (
       commit,
       failover,
       useSampleData,
-      siteName,
     },
     headers: {
       "Content-Type": "text/html; charset=utf-8",

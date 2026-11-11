@@ -24,7 +24,9 @@ export type Icon = {
 };
 
 export type TemplateContext = {
+  siteName: string;
   title: string;
+  description: string;
   favicon: string;
   emoji?: string;
   html: string;
@@ -32,7 +34,6 @@ export type TemplateContext = {
   commit?: string;
   updatedAt?: string;
   useSampleData: boolean;
-  siteName: string;
   failover?: {
     generatedAt: string;
   };

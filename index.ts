@@ -125,14 +125,16 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
     let response: Response = {
       status: 500,
       context: {
+        siteName,
         title: "leo/500",
+        description:
+          "Something went wrong, and the server failed to render the page.",
         emoji,
         favicon,
         html: "<p>Something went wrong, and the server failed to render the page.</p><p>Womp womp.</p>",
         renderTime: new Date().getTime() - startTime,
         commit,
         useSampleData,
-        siteName,
       },
       headers: {
         "Content-Type": "text/html; charset=utf-8",
