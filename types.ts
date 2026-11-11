@@ -32,6 +32,7 @@ export type TemplateContext = {
   commit?: string;
   updatedAt?: string;
   useSampleData: boolean;
+  siteName: string;
   failover?: {
     generatedAt: string;
   };

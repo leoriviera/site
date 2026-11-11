@@ -20,10 +20,10 @@ export const generateResponse = async (
   startTime: number,
   contextOverride: Pick<
     TemplateContext,
-    "commit" | "failover" | "useSampleData"
+    "commit" | "failover" | "useSampleData" | "siteName"
   >,
 ): Promise<Response> => {
-  const { commit, failover, useSampleData } = contextOverride;
+  const { commit, failover, useSampleData, siteName } = contextOverride;
 
   if (pageContent === undefined) {
     const { emoji, favicon } = generateIcons("🥸");
@@ -38,6 +38,7 @@ export const generateResponse = async (
         commit,
         failover,
         useSampleData,
+        siteName,
       },
       headers: {
         "Content-Type": "text/html; charset=utf-8",
@@ -64,6 +65,7 @@ export const generateResponse = async (
       commit,
       failover,
       useSampleData,
+      siteName,
     },
     headers: {
       "Content-Type": "text/html; charset=utf-8",

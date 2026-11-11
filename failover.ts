@@ -23,6 +23,7 @@ const { commit, rootDir } = workerData as WorkerData;
 const isProd = process.env.NODE_ENV! === "production";
 const tempDirPath = isProd ? tmpdir() : resolve(rootDir, "./output");
 const useSampleData = process.env.USE_SAMPLE_DATA! === "true";
+const siteName = process.env.SITE_NAME!;
 const surgeBasicAuth = Buffer.from(
   `token:${process.env.SURGE_SH_TOKEN!}`,
 ).toString("base64");
@@ -72,6 +73,7 @@ const createFailoverBackup = async () => {
               generatedAt: lastFetched.toUTCString(),
             },
             useSampleData,
+            siteName,
           },
         );
 

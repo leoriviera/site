@@ -16,6 +16,7 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
     ENV: "production",
     DISPLAY_FAILOVER_BANNER: "false",
     USE_SAMPLE_DATA: "false",
+    SITE_NAME: "cowsay.io",
   });
 
   const port = process.env.PORT || 3000;
@@ -61,6 +62,10 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
       key: "DISPLAY_FAILOVER_BANNER",
       isSensitive: false,
     },
+    {
+      key: "SITE_NAME",
+      isSensitive: false,
+    },
   ];
 
   console.info(
@@ -91,6 +96,7 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
   const template = loadTemplate(process.env.TEMPLATE_PATH!);
   const displayFailoverBanner = process.env.DISPLAY_FAILOVER_BANNER! === "true";
   const useSampleData = process.env.USE_SAMPLE_DATA! === "true";
+  const siteName = process.env.SITE_NAME!;
 
   // Get current hash
   const shortHash: string = await new Promise((res, rej) => {
@@ -126,6 +132,7 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
         renderTime: new Date().getTime() - startTime,
         commit,
         useSampleData,
+        siteName,
       },
       headers: {
         "Content-Type": "text/html; charset=utf-8",
@@ -164,7 +171,12 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
           pageContent,
           documents,
           startTime,
-          { commit, failover, useSampleData },
+          {
+            commit,
+            failover,
+            useSampleData,
+            siteName,
+          },
         );
       }
     } catch (error) {
