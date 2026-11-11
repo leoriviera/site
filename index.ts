@@ -62,11 +62,18 @@ import { getSampleData, fetchSamplePageContent } from "./sample";
       isSensitive: false,
     },
   ];
+
+  console.info(
+    `Running in ${process.env.NODE_ENV} mode. Checking environment variables.`,
+  );
   const missingEnv = requiredEnv.filter(({ key }) => !process.env[key]);
   if (missingEnv.length > 0) {
-    throw new Error(
-      `Missing required environment variable(s): ${missingEnv.map(({ key }) => key).join(", ")}`,
-    );
+    const message = `Missing environment variable(s): ${missingEnv.map(({ key }) => key).join(", ")}`;
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(message);
+    }
+
+    console.info(message);
   }
 
   const env = Object.fromEntries(
