@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=production tsx index.ts",
-    "dev": "nodemon index.ts"
+    "dev": "NODE_ENV=development nodemon index.ts"
   },
   "keywords": [],
   "author": "Leo Riviera <leo@cowsay.io>",
