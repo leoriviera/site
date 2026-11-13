@@ -87,7 +87,7 @@ export const getDocuments = async () => {
       };
 
       if (document.children.length > 0) {
-        return traverseDocumentTree(
+        traverseDocumentTree(
           document.children,
           `${prefix}${document.title}/`,
           documents,
